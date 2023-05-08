@@ -1,0 +1,221 @@
+@Library('my-shared-library') _
+
+pipeline{
+
+    agent any
+
+    parameters{
+        string(name: 'aws_account_id', description: " AWS Account ID", defaultValue: '191235372748')
+        string(name: 'Region', description: "Region of ECR", defaultValue: 'us-east-1')
+        string(name: 'ECR_REPO_NAME', description: "name of the ECR", defaultValue: 'javaapprepo')
+        string(name: 'cluster', description: "name of the EKS Cluster", defaultValue: 'demo-cluster1')
+    }
+    environment{
+
+        ACCESS_KEY = credentials('AWS_ACCESS_KEY_ID')
+        SECRET_KEY = credentials('AWS_SECRET_KEY_ID')
+        COSIGN_PASSWORD = credentials('cosign-password')
+        COSIGN_PRIVATE_KEY = credentials('cosign-private-key')
+        SNYK_TOKEN = credentials('SNYK_TOKEN')
+    }
+
+    stages{         
+        stage('Git Checkout'){
+            steps{
+            gitCheckout(
+                branch: "main",
+                url: "https://github.com/Pooja-graafika/java_app.git"
+            )
+            }
+        }
+
+        stage('Secret Scanning : Trufflehog'){
+            steps{
+                sh 'docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --repo https://github.com/Pooja-graafika/java_app.git'
+            }
+        }
+         stage('Unit Test maven'){
+            steps{
+               script{                 
+                   mvnTest()
+               }
+            }
+        }
+         stage('Integration Test maven'){
+            steps{
+               script{
+                   mvnIntegrationTest()
+               }
+            }
+        }
+        stage('Static code analysis: Sonarqube'){
+            steps{
+               script{                   
+                   def SonarQubecredentialsId = 'sonarqube-api'
+                   statiCodeAnalysis(SonarQubecredentialsId)
+               }
+            }
+        }
+        stage('Quality Gate Status Check : Sonarqube'){
+            steps{
+               script{
+                   
+                   def SonarQubecredentialsId = 'sonarqube-api'
+                   QualityGateStatus(SonarQubecredentialsId)
+		   timeout(time: 5, unit: 'MINUTES') {
+    		  	def qualitygate = waitForQualityGate()
+    			if (qualitygate.status != "OK") {
+        		error "Pipeline aborted due to quality gate coverage failure."
+    			}
+				}			
+               }
+            }
+        }
+        stage('Maven Build : maven'){
+            steps{
+               script{                 
+                   mvnBuild()
+               }
+            }
+        }
+        stage('SCA Analysis : Snyk') {
+            steps {
+                    sh 'snyk auth $SNYK_TOKEN'
+                    sh 'chmod +x mvnw'
+					sh 'snyk test || true'
+                    sh 'snyk monitor'
+
+                }   
+        }	
+        stage('Docker Image Build : ECR'){
+            steps{
+               script{
+                   
+                   dockerBuild("${params.aws_account_id}","${params.Region}","${params.ECR_REPO_NAME}")
+               }
+            }
+        }
+        stage('Docker Image Scan: trivy '){
+            steps{
+               script{
+                   
+                   dockerImageScan("${params.aws_account_id}","${params.Region}","${params.ECR_REPO_NAME}")
+               }
+            }
+        }
+        stage('Docker Image Push : ECR '){
+            steps{
+               script{
+                   
+                   dockerImagePush("${params.aws_account_id}","${params.Region}","${params.ECR_REPO_NAME}")
+               }
+            }
+        }
+        stage('Sign the Container : Cosign '){
+            steps{
+               sh 'cosign version'
+               sh 'cosign sign --key $COSIGN_PRIVATE_KEY 191235372748.dkr.ecr.us-east-1.amazonaws.com/javaapprepo:latest'
+            }
+        }   
+        stage('Docker Image Cleanup : ECR '){
+            steps{
+               script{
+                   
+                   dockerImageCleanup("${params.aws_account_id}","${params.Region}","${params.ECR_REPO_NAME}")
+               }
+            }
+        } 
+        stage('k8s manifest scanning : kube-score '){
+            steps{
+                sh 'docker run --rm -v $(pwd):/project zegl/kube-score:latest score --exit-one-on-warning deployment.yaml || true '
+            }
+        }
+        stage('k8s CIS scanning : Kube-bench'){
+             steps{
+                 script{
+                
+                     sh """
+                       kubectl logs kube-bench-srslc 
+                      
+                     """                  
+                 }
+             }
+         } 
+        stage('Create EKS Cluster : Terraform'){
+            steps{
+                script{
+
+                    dir('eks_module') {
+                      sh """
+                          
+                          terraform init 
+                          terraform plan -var 'access_key=$ACCESS_KEY' -var 'secret_key=$SECRET_KEY' -var 'region=${params.Region}' --var-file=./config/terraform.tfvars
+                          terraform apply -var 'access_key=$ACCESS_KEY' -var 'secret_key=$SECRET_KEY' -var 'region=${params.Region}' --var-file=./config/terraform.tfvars --auto-approve
+                      """
+                  }
+                }
+            }
+        }
+        stage('Connect to EKS '){
+        steps{
+
+            script{
+
+                sh """
+                aws configure set aws_access_key_id "$ACCESS_KEY"
+                aws configure set aws_secret_access_key "$SECRET_KEY"
+                aws configure set region "${params.Region}"
+                aws eks --region ${params.Region} update-kubeconfig --name ${params.cluster}
+                """
+            }
+        }
+        } 
+        stage('Deployment on EKS Cluster : Helm'){
+            steps{
+                script{
+                  
+                  def apply = false
+
+                  try{
+                    input message: 'please confirm to deploy on eks', ok: 'Ready to apply the config ?'
+                    apply = true
+                  }catch(err){
+                    apply= false
+                    currentBuild.result  = 'UNSTABLE'
+                  }
+                  if(apply){
+
+                    sh """
+                      helm upgrade --install myjavaapp demochart/
+                    """
+                  }
+                }
+            }
+        }
+        stage(' DAST : OwaspZAP') {
+          steps {
+		    sshagent(['zap']){
+				sh '''ssh -o StrictHostKeyChecking=no ubuntu@54.208.12.42 "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://afc6e4511e6e141168cb3764152d9792-727485931.us-east-1.elb.amazonaws.com/home/data " || true'''
+		    }
+	     }
+        }   
+    }
+	post {
+	failure {
+		script{
+			def jiraServer = 'ABC'
+
+            def testIssue = [fields:    [
+                                        project: [id: '10004'],
+                                        summary: '##JIRA created for Jenkins',
+                                        description: '##Test Description',
+                                        issuetype: [id: '10004']]]  
+
+            response = jiraNewIssue issue: testIssue , site: jiraServer
+
+            echo response.successful.toString()
+            echo response.data.toString() 
+			}
+		}
+	}
+}
