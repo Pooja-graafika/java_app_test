@@ -49,5 +49,15 @@ Now we can cleanup by using below commands:
 --------
     kubectl delete deploy kubernetes-configmap-reload
     kubectl delete svc kubernetes-configmap-reload
-# springboot_k8s_application
-# mrdevops_java_app
+
+References
+--------
+1. Trufflehog : https://github.com/trufflesecurity/trufflehog
+2. Snyk       : https://www.cyberithub.com/how-to-install-snyk-cli-with-npm-or-yarn-on-ubuntu-debian/#Step_1_Prerequisites
+3. Cosign     : https://youtu.be/Hj4CAGwcN74
+4. kube-score : https://github.com/zegl/kube-score
+5. kube-bench : https://github.com/aquasecurity/kube-bench
+6. OwaspZAP   : https://youtu.be/EEEiqWolrqQ
+7. Jira       : https://youtu.be/i2I1xpVZjeM
+8. Prometheus : https://www.coachdevops.com/2022/05/how-to-setup-monitoring-on-kubernetes.html
+9. Grafana    : https://www.coachdevops.com/2022/05/how-to-setup-monitoring-on-kubernetes.html
