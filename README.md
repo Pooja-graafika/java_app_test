@@ -3,6 +3,10 @@
 # kubernetes-configmap-reload
 # Platform - EC2 instances
 
+Pipeline Video:
+--------
+https://youtu.be/g-v9AsubOqY
+
 Pre-requisites:
 --------
     - Install Git
