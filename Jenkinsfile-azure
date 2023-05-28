@@ -1,0 +1,38 @@
+ 
+pipeline {
+
+    agent any
+
+    parameters
+    {
+        string(name: 'Region', description: "Region of ECR", defaultValue: 'ap-south-1')
+        string(name: 'ImageName', description: "name of the docker build", defaultValue: 'javapp')
+        string(name: 'ImageTag', description: "tag of the docker build", defaultValue: 'v1')
+        string(name: 'DockerHubUser', description: "name of the Application", defaultValue: 'poojajeeva')
+        string(name: 'cluster', description: "name of the EKS Cluster", defaultValue: 'demo-cluster1')
+    } 
+    environment{
+
+    }
+    stages{
+        stage('Connect to AKS cluster'){     
+            steps{
+               script{
+                  sh """
+
+                  """
+               }   
+            }
+        }
+        stage('Deployment of AKS cluster'){      
+            steps{
+               script{
+                    sh """
+
+                    """
+                  
+               }   
+            }
+        }
+    }
+}
