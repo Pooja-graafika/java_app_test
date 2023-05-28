@@ -19,12 +19,9 @@ pipeline {
     }
     stages{
         stage('Git Checkout'){ 
-            steps{
-            gitCheckout(
-                branch: "main",
-                url: "https://github.com/Pooja-graafika/CI-CD-Project.git"
-            )
-            }
+            steps {
+                  git 'https://github.com/Pooja-graafika/CI-CD-Project.git'
+               }
         }
         stage('Connect to EKS cluster: Terraform'){     
             steps{
