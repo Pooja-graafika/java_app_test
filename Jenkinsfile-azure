@@ -11,9 +11,6 @@ pipeline {
         string(name: 'DockerHubUser', description: "name of the Application", defaultValue: 'poojajeeva')
         string(name: 'cluster', description: "name of the EKS Cluster", defaultValue: 'demo-cluster1')
     } 
-    environment{
-
-    }
     stages{
 
         stage('Deployment of AKS cluster'){      
