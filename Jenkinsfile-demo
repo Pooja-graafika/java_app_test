@@ -20,7 +20,8 @@ pipeline {
     stages{
         stage('Git Checkout'){ 
             steps {
-                  git 'https://github.com/Pooja-graafika/CI-CD-Project.git'
+                  checkout scmGit(branches: [[name: '*/main']],
+                  userRemoteConfigs:[[ url: 'https://github.com/Pooja-graafika/CI-CD-Project.git' ]] )
                }
         }
         stage('Connect to EKS cluster: Terraform'){     
