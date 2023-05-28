@@ -18,12 +18,7 @@ pipeline {
         SECRET_KEY = credentials('AWS_SECRET_KEY_ID')
     }
     stages{
-        stage('Git Checkout'){ 
-            steps {
-                  checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Pooja-graafika/CI-CD-Project.git']]])
-               }
-        }
-        stage('Connect to EKS cluster: Terraform'){     
+        stage('Connect to EKS cluster'){     
             steps{
                script{
                   sh """
@@ -35,7 +30,7 @@ pipeline {
                }   
             }
         }
-        stage('Deployment of EKS cluster: Terraform'){      
+        stage('Deployment of EKS cluster'){      
             steps{
                script{
                     sh """
