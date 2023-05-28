@@ -15,21 +15,12 @@ pipeline {
 
     }
     stages{
-        stage('Connect to AKS cluster'){     
-            steps{
-               script{
-                  sh """
 
-                  """
-               }   
-            }
-        }
         stage('Deployment of AKS cluster'){      
             steps{
                script{
-                    sh """
-
-                    """
+                  withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'K8S', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
+                  sh ('kubectl apply -f .')
                   
                }   
             }
