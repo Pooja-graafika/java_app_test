@@ -24,8 +24,10 @@ pipeline {
         SPTENANT = credentials('sptenant')
     }
     stages{
+
+
         stage('Deploy to EKS cluster'){  
-			when { expression { params.DeploymentDestination = 'AWS' } }
+			when { expression { params.DeploymentDestination == 'AWS' } }
             steps{
                script{
                   sh """
@@ -40,8 +42,9 @@ pipeline {
                }   
             }
         }
+
         stage('Deployment of AKS cluster'){   
-			when { expression { params.DeploymentDestination = 'Azure' } }
+			when { expression { params.DeploymentDestination == 'Azure' } }
             steps{
                script{
                   sh """
