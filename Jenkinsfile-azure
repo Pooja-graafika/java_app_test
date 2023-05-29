@@ -10,28 +10,27 @@ pipeline {
         string(name: 'ImageTag', description: "tag of the docker build", defaultValue: 'v1')
         string(name: 'DockerHubUser', description: "name of the Application", defaultValue: 'poojajeeva')
         string(name: 'cluster', description: "name of the EKS Cluster", defaultValue: 'demo-cluster1')
+        srring(name: 'ResourceGroup', description: "name of the Resource Group", defaultValue: 'myResourceGroup')
     } 
-    stages{
+    environment{
 
-        // stage('Deployment of AKS cluster'){      
-        //     steps{
-        //        script{
-        //           withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'K8S', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-        //           sh ('kubectl apply -f .')
-        //           }
-        //        }   
-        //     }
-        // }
+        SPUSERNAME = credentials('spusername')
+        SPPWD = credentials('sppwd')
+        SPTENANT = credentials('sptenant')
+    }
+    stages{
         stage('Deployment of AKS cluster'){      
             steps{
                script{
-                  sh 'az login --service-principal --username 85ed8fdd-91ca-4809-b6a0-1c67ab0bc159 --password YMm8Q~UTQtLK-nuKVsaQ.fPRt66GuEnvtr_7ybzL --tenant 892e1ba6-af5a-439d-83c3-ad34f69ccffa '
-                  sh 'az aks get-credentials --resource-group myResourceGroup --name demo-cluster1'
-                  sh 'kubectl apply -f .'
+                  sh """
+                  az login --service-principal --username "$SPUSERNAME" --password "$SPPWD" --tenant "$SPTENANT"
+                  az aks get-credentials --resource-group ${params.ResourceGroup} --name ${params.cluster}
+                  kubectl apply -f .
+                  """
                   }
                }   
             }
-               
+        
         
     }
 }
