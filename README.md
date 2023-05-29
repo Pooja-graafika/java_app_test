@@ -52,6 +52,9 @@ Now Goto Loadbalancer and check whether service comes Inservice or not, If it co
     
 ![2](https://user-images.githubusercontent.com/63221837/82123471-44f5f300-97b7-11ea-9d10-438cf9cc98a0.png)
 
+Note: In the terraform.tfvars file please edit the subnet values as per the subnets present in your environment
+Note: Change the value for image source accordingly in deployment.yaml file before running the pipeline 
+
 Now we can cleanup by using below commands:
 --------
     kubectl delete deploy kubernetes-configmap-reload
