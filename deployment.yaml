@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: myjavaapp
-        image: poojajeeva/jenkins:162
+        image: poojajeeva/javapp:latest
         ports:
         - containerPort: 8080
 
