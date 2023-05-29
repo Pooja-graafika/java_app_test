@@ -13,19 +13,19 @@ pipeline {
         string(name: 'ImageTag', description: "tag of the docker build", defaultValue: 'v1')
         string(name: 'DockerHubUser', description: "name of the Application", defaultValue: 'poojajeeva')
         string(name: 'cluster', description: "name of the EKS Cluster", defaultValue: 'demo-cluster1')
-		      string(name: 'ResourceGroup', description: "name of the Resource Group", defaultValue: 'myResourceGroup')
+		string(name: 'ResourceGroup', description: "name of the Resource Group", defaultValue: 'myResourceGroup')
     } 
     environment{
 
         ACCESS_KEY = credentials('AWS_ACCESS_KEY_ID')
         SECRET_KEY = credentials('AWS_SECRET_KEY_ID')
-		      SPUSERNAME = credentials('spusername')
+		SPUSERNAME = credentials('spusername')
         SPPWD = credentials('sppwd')
         SPTENANT = credentials('sptenant')
     }
     stages{
         stage('Deploy to EKS cluster'){  
-			         when { expression { params.DeploymentDestination = 'AWS' } }
+			when { expression { params.DeploymentDestination = 'AWS' } }
             steps{
                script{
                   sh """
@@ -41,13 +41,13 @@ pipeline {
             }
         }
         stage('Deployment of AKS cluster'){   
-			         when { expression { params.DeploymentDestination = 'Azure' } }
+			when { expression { params.DeploymentDestination = 'Azure' } }
             steps{
                script{
                   sh """
-					               az login --service-principal --username "$SPUSERNAME" --password "$SPPWD" --tenant "$SPTENANT"
-					               az aks get-credentials --resource-group ${params.ResourceGroup} --name ${params.cluster}
-					               kubectl apply -f .
+					az login --service-principal --username "$SPUSERNAME" --password "$SPPWD" --tenant "$SPTENANT"
+					az aks get-credentials --resource-group ${params.ResourceGroup} --name ${params.cluster}
+					kubectl apply -f .
                   """  
                }   
             }
