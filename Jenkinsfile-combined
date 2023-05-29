@@ -6,7 +6,7 @@ pipeline {
 
     parameters
     {
-        
+        choice(choices: 'AWS\nAzure\nGCP\nnone', description: "Choose the deployment destination", name: 'Deployment Destination', defaultValue: 'AWS' )
         string(name: 'aws_account_id', description: " AWS Account ID", defaultValue: '071241535602')
         string(name: 'Region', description: "Region of ECR", defaultValue: 'ap-south-1')
         string(name: 'ImageName', description: "name of the docker build", defaultValue: 'javapp')
@@ -20,7 +20,7 @@ pipeline {
         SECRET_KEY = credentials('AWS_SECRET_KEY_ID')
     }
     stages{
-        stage('Connect to EKS cluster'){     
+        stage('Deploy to EKS cluster'){     
             steps{
                script{
                   sh """
