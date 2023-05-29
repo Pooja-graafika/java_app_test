@@ -35,7 +35,7 @@ pipeline {
                }   
             }
         }
-        stage('Deployment of EKS cluster'){      
+        stage('Deployment of AKS cluster'){      
             steps{
                script{
                     withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'K8S', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
